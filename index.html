@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ClassRec">
+<meta name="theme-color" content="#0a0c12">
+<meta name="mobile-web-app-capable" content="yes">
+<title>ClassRec</title>
+
+<!-- PWA Manifest embebido -->
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22ClassRec%22%2C%22short_name%22%3A%22ClassRec%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0c12%22%2C%22theme_color%22%3A%22%230a0c12%22%2C%22orientation%22%3A%22portrait%22%7D">
+
+<!-- Apple Touch Icon SVG embebido -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%230a0c12'/%3E%3Ccircle cx='96' cy='96' r='40' fill='none' stroke='%233d8eff' stroke-width='6'/%3E%3Crect x='84' y='60' width='24' height='52' rx='12' fill='%233d8eff'/%3E%3Cpath d='M68 104 Q68 128 96 128 Q124 128 124 104' stroke='%233d8eff' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3Cline x1='96' y1='128' x2='96' y2='144' stroke='%233d8eff' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0a0c12;
+  --card: #12151e;
+  --card2: #181c28;
+  --border: #1e2235;
+  --accent: #3d8eff;
+  --red: #ff3d5a;
+  --green: #00e07a;
+  --yellow: #ffc531;
+  --text: #f0f2f8;
+  --text2: #7a849e;
+  --text3: #2e334a;
+  --nav-h: calc(64px + env(safe-area-inset-bottom, 0px));
+  --top-h: calc(56px + env(safe-area-inset-top, 0px));
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text);
+  font-family:'Plus Jakarta Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+
+/* ── SCREENS ── */
+.screen { position:absolute; inset:0; display:none; flex-direction:column;
+  padding-bottom:var(--nav-h); }
+.screen.active { display:flex; }
+
+/* ── TOPBAR ── */
+.topbar {
+  padding: calc(env(safe-area-inset-top,12px) + 14px) 20px 14px;
+  display:flex; align-items:center; gap:12px;
+  background:var(--bg); border-bottom:1px solid var(--border);
+  flex-shrink:0; min-height:var(--top-h);
+}
+.topbar h1 { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; flex:1; }
+.topbar h1 span { color:var(--accent); }
+.topbar .sub { font-size:13px; color:var(--text2); flex:1; font-weight:600; }
+.topbar-btn {
+  width:36px; height:36px; border-radius:10px; border:1px solid var(--border);
+  background:var(--card); color:var(--text2); font-size:16px;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+
+/* ── SCROLL AREA ── */
+.scroll { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
+.scroll::-webkit-scrollbar { display:none; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0;
+  height:var(--nav-h);
+  background:var(--card);
+  border-top:1px solid var(--border);
+  display:flex;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  z-index:50;
+}
+.nav-item {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:4px; cursor:pointer;
+  color:var(--text3); transition:color 0.15s; padding-bottom:4px;
+  -webkit-tap-highlight-color:transparent;
+}
+.nav-item.active { color:var(--accent); }
+.nav-icon { font-size:22px; line-height:1; }
+.nav-label { font-size:10px; font-weight:600; letter-spacing:0.3px; }
+
+/* ════════════════════════════════
+   SCREEN: GRABAR
+════════════════════════════════ */
+.rec-screen { background:var(--bg); }
+
+.rec-folder-select {
+  margin:16px 20px 0;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:12px 16px;
+  display:flex; align-items:center; gap:10px; cursor:pointer;
+}
+.rec-folder-select span { flex:1; font-size:14px; color:var(--text2); }
+.rec-folder-select strong { font-size:14px; }
+
+/* Big record button */
+.rec-center {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:20px;
+}
+
+.rec-timer {
+  font-family:'Syne',sans-serif; font-size:52px; font-weight:800;
+  letter-spacing:-2px; color:var(--text);
+}
+.rec-timer.recording { color:var(--red); }
+
+/* Waveform */
+.waveform {
+  display:flex; align-items:center; gap:3px;
+  height:40px; width:220px; justify-content:center;
+}
+.wbar {
+  width:3px; background:var(--border); border-radius:3px;
+  transition:height 0.08s ease; height:4px; flex-shrink:0;
+}
+.wbar.on { background:var(--accent); }
+
+.btn-rec {
+  width:84px; height:84px; border-radius:50%;
+  background:var(--red);
+  box-shadow:0 0 0 8px rgba(255,61,90,0.12), 0 0 0 16px rgba(255,61,90,0.05);
+  border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:transform 0.12s, box-shadow 0.2s;
+  position:relative;
+}
+.btn-rec:active { transform:scale(0.93); }
+.btn-rec.recording {
+  box-shadow:0 0 0 8px rgba(255,61,90,0.2), 0 0 0 24px rgba(255,61,90,0.08);
+  animation:recpulse 2s infinite;
+}
+@keyframes recpulse {
+  0%,100%{box-shadow:0 0 0 8px rgba(255,61,90,0.2),0 0 0 24px rgba(255,61,90,0.08)}
+  50%{box-shadow:0 0 0 14px rgba(255,61,90,0.15),0 0 0 28px rgba(255,61,90,0.04)}
+}
+.btn-rec svg { width:32px; height:32px; }
+
+.rec-sub-btns {
+  display:flex; gap:16px;
+}
+.btn-sub {
+  display:flex; align-items:center; gap:7px;
+  padding:10px 20px; border-radius:50px;
+  border:1px solid var(--border); background:var(--card);
+  color:var(--text2); font-size:13px; font-weight:600;
+  font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer;
+  transition:all 0.15s;
+}
+.btn-sub:active { transform:scale(0.96); background:var(--card2); }
+.btn-sub:disabled { opacity:0.3; pointer-events:none; }
+.btn-sub.stop { border-color:rgba(255,61,90,0.3); color:var(--red); }
+
+.rec-status-text {
+  font-size:12px; color:var(--text3); letter-spacing:1.5px;
+  text-transform:uppercase; font-weight:600;
+}
+.rec-status-text.on { color:var(--red); }
+
+/* ════════════════════════════════
+   SCREEN: GRABACIONES
+════════════════════════════════ */
+.recs-list { padding:12px 16px 8px; }
+
+.empty-state {
+  padding:60px 20px; text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+}
+.empty-state .ei { font-size:52px; opacity:0.25; }
+.empty-state p { font-size:13px; color:var(--text3); line-height:1.7; }
+
+.rec-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; margin-bottom:10px; overflow:hidden;
+  transition:border-color 0.2s;
+}
+.rec-card.open { border-color:rgba(61,142,255,0.4); }
+
+.rec-card-head {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 16px; cursor:pointer;
+}
+.rec-card-icon {
+  width:42px; height:42px; border-radius:12px; flex-shrink:0;
+  background:linear-gradient(135deg,rgba(61,142,255,0.2),rgba(0,224,122,0.1));
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.rec-card-info { flex:1; min-width:0; }
+.rec-card-name {
+  font-size:14px; font-weight:600;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.rec-card-meta {
+  font-size:11px; color:var(--text2); margin-top:3px;
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+.rec-card-arr { color:var(--text3); font-size:14px; transition:transform 0.2s; }
+.rec-card.open .rec-card-arr { transform:rotate(90deg); }
+
+.rec-card-body { padding:0 16px 16px; display:none; }
+.rec-card.open .rec-card-body { display:block; }
+
+.rec-card-body audio { width:100%; border-radius:8px; margin-bottom:12px; }
+
+.rec-actions {
+  display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;
+}
+.action-pill {
+  display:flex; align-items:center; gap:5px;
+  padding:7px 13px; border-radius:50px;
+  border:1px solid var(--border); background:var(--card2);
+  font-size:11px; font-weight:600; color:var(--text2); cursor:pointer;
+  transition:all 0.15s;
+}
+.action-pill:active { transform:scale(0.95); }
+.action-pill.danger { border-color:rgba(255,61,90,0.3); color:var(--red); }
+
+.transcript-wrap { background:var(--bg); border-radius:10px; padding:12px; }
+.transcript-lbl {
+  font-size:10px; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--text3); margin-bottom:8px; font-weight:600;
+  display:flex; align-items:center; gap:8px;
+}
+.tbadge {
+  padding:2px 8px; border-radius:20px; font-size:10px; font-weight:600;
+}
+.tbadge.ok { background:rgba(0,224,122,0.12); color:var(--green); }
+.tbadge.proc { background:rgba(255,197,49,0.12); color:var(--yellow); animation:blink 1.5s infinite; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
+.transcript-text {
+  font-size:13px; color:var(--text2); line-height:1.8;
+  max-height:140px; overflow-y:auto;
+}
+.transcript-text::-webkit-scrollbar { display:none; }
+
+/* ════════════════════════════════
+   SCREEN: ASIGNATURAS
+════════════════════════════════ */
+.folders-list { padding:12px 16px; }
+.folder-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:16px; margin-bottom:10px;
+  display:flex; align-items:center; gap:14px; cursor:pointer;
+  transition:background 0.15s;
+}
+.folder-card:active { background:var(--card2); }
+.folder-emoji { font-size:28px; }
+.folder-info { flex:1; }
+.folder-name { font-size:15px; font-weight:600; }
+.folder-count { font-size:12px; color:var(--text2); margin-top:2px; }
+.folder-del {
+  width:32px; height:32px; border-radius:8px;
+  background:rgba(255,61,90,0.08); border:1px solid rgba(255,61,90,0.2);
+  color:var(--red); font-size:14px; display:flex; align-items:center;
+  justify-content:center; cursor:pointer;
+}
+.add-folder-card {
+  border:1px dashed var(--border); border-radius:16px;
+  padding:16px; margin-bottom:10px;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  color:var(--text3); font-size:14px; font-weight:600; cursor:pointer;
+}
+.add-folder-card:active { background:var(--card); }
+
+/* ════════════════════════════════
+   BOTTOM SHEET / MODAL
+════════════════════════════════ */
+.overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(6px); z-index:100;
+  display:none; align-items:flex-end; justify-content:center;
+}
+.overlay.open { display:flex; }
+.sheet {
+  background:var(--card); border-radius:24px 24px 0 0;
+  padding:8px 20px calc(20px + env(safe-area-inset-bottom,0px));
+  width:100%; max-height:80vh; overflow-y:auto;
+  animation:slideup 0.25s ease;
+}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.sheet-handle {
+  width:36px; height:4px; background:var(--border);
+  border-radius:4px; margin:8px auto 20px;
+}
+.sheet h2 { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-bottom:20px; }
+.field { margin-bottom:16px; }
+.field label { display:block; font-size:11px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--text3); margin-bottom:8px; font-weight:600; }
+.field input, .field select {
+  width:100%; background:var(--bg); border:1px solid var(--border);
+  border-radius:12px; padding:13px 16px;
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; color:var(--text);
+  outline:none; transition:border-color 0.15s; -webkit-appearance:none;
+}
+.field input:focus, .field select:focus { border-color:var(--accent); }
+.field select option { background:var(--card); }
+.sheet-actions { display:flex; gap:10px; margin-top:20px; }
+.btn-sheet {
+  flex:1; padding:14px; border-radius:14px; border:none;
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; font-weight:700;
+  cursor:pointer; transition:all 0.15s;
+}
+.btn-sheet:active { transform:scale(0.97); }
+.btn-sheet.primary { background:var(--accent); color:#fff; }
+.btn-sheet.ghost { background:var(--card2); color:var(--text2); }
+
+/* ── EMOJI PICKER (simple) ── */
+.emoji-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.emoji-opt {
+  width:44px; height:44px; border-radius:10px;
+  background:var(--card2); border:1px solid var(--border);
+  font-size:22px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all 0.12s;
+}
+.emoji-opt.sel { border-color:var(--accent); background:rgba(61,142,255,0.12); }
+.emoji-opt:active { transform:scale(0.92); }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:calc(var(--nav-h) + 12px); left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--card2); border:1px solid var(--border);
+  border-radius:50px; padding:10px 20px;
+  font-size:13px; font-weight:600; color:var(--text);
+  z-index:200; opacity:0; transition:all 0.3s; white-space:nowrap;
+  pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.ok { border-color:rgba(0,224,122,0.4); }
+.toast.err { border-color:rgba(255,61,90,0.4); }
+
+/* ── FILTER CHIPS ── */
+.chips { display:flex; gap:8px; padding:12px 16px 4px; overflow-x:auto; }
+.chips::-webkit-scrollbar { display:none; }
+.chip {
+  padding:7px 14px; border-radius:50px; font-size:12px; font-weight:600;
+  border:1px solid var(--border); background:var(--card); color:var(--text2);
+  flex-shrink:0; cursor:pointer; transition:all 0.15s; white-space:nowrap;
+}
+.chip.active { background:rgba(61,142,255,0.15); border-color:var(--accent); color:var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- ══════ SCREEN: GRABAR ══════ -->
+<div class="screen rec-screen active" id="s-record">
+  <div class="topbar">
+    <h1>Class<span>Rec</span></h1>
+    <div class="topbar-btn" onclick="openFolderPickSheet()">📁</div>
+  </div>
+
+  <div class="rec-folder-select" onclick="openFolderPickSheet()">
+    <span>Asignatura:</span>
+    <strong id="selFolderLabel">Sin asignatura</strong>
+    <span style="color:var(--text3)">›</span>
+  </div>
+
+  <div class="rec-center">
+    <div class="rec-status-text" id="recStatus">LISTO PARA GRABAR</div>
+    <div class="waveform" id="waveform"></div>
+    <div class="rec-timer" id="recTimer">00:00</div>
+
+    <button class="btn-rec" id="btnRec" onclick="toggleRecord()">
+      <svg viewBox="0 0 32 32" fill="white">
+        <circle cx="16" cy="16" r="10" id="recIcon"/>
+      </svg>
+    </button>
+
+    <div class="rec-sub-btns">
+      <button class="btn-sub" id="btnPause" onclick="togglePause()" disabled>⏸ Pausar</button>
+      <button class="btn-sub stop" id="btnStop" onclick="stopRecording()" disabled>⏹ Detener</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: GRABACIONES ══════ -->
+<div class="screen" id="s-recs">
+  <div class="topbar">
+    <span class="sub">Grabaciones</span>
+    <div class="topbar-btn" id="searchBtn" onclick="toggleSearch()" style="font-size:18px">🔍</div>
+  </div>
+  <div class="chips" id="filterChips"></div>
+  <div class="scroll">
+    <div class="recs-list" id="recsList"></div>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: ASIGNATURAS ══════ -->
+<div class="screen" id="s-folders">
+  <div class="topbar">
+    <span class="sub">Asignaturas</span>
+  </div>
+  <div class="scroll">
+    <div class="folders-list" id="foldersList"></div>
+  </div>
+</div>
+
+<!-- ══════ BOTTOM NAV ══════ -->
+<nav class="bottom-nav">
+  <div class="nav-item active" id="nav-record" onclick="goTo('record')">
+    <div class="nav-icon">🎙️</div>
+    <div class="nav-label">Grabar</div>
+  </div>
+  <div class="nav-item" id="nav-recs" onclick="goTo('recs')">
+    <div class="nav-icon">🎵</div>
+    <div class="nav-label">Clases</div>
+  </div>
+  <div class="nav-item" id="nav-folders" onclick="goTo('folders')">
+    <div class="nav-icon">📚</div>
+    <div class="nav-label">Asignaturas</div>
+  </div>
+</nav>
+
+<!-- ══════ SHEET: Elegir carpeta para grabar ══════ -->
+<div class="overlay" id="sheetFolderPick" onclick="closeSheetIf(event,'sheetFolderPick')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Elegir asignatura</h2>
+    <div id="pickFolderList"></div>
+    <div class="sheet-actions">
+      <button class="btn-sheet ghost" onclick="closeSheet('sheetFolderPick')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SHEET: Nueva asignatura ══════ -->
+<div class="overlay" id="sheetNewFolder" onclick="closeSheetIf(event,'sheetNewFolder')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Nueva asignatura</h2>
+    <div class="field">
+      <label>Nombre</label>
+      <input type="text" id="nfName" placeholder="ej. Matemáticas, Biología..." autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Ícono</label>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-sheet ghost" onclick="closeSheet('sheetNewFolder')">Cancelar</button>
+      <button class="btn-sheet primary" onclick="createFolder()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SHEET: Renombrar ══════ -->
+<div class="overlay" id="sheetRename" onclick="closeSheetIf(event,'sheetRename')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Renombrar grabación</h2>
+    <div class="field">
+      <label>Nuevo nombre</label>
+      <input type="text" id="renameInput" autocomplete="off">
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-sheet ghost" onclick="closeSheet('sheetRename')">Cancelar</button>
+      <button class="btn-sheet primary" onclick="confirmRename()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SHEET: Mover ══════ -->
+<div class="overlay" id="sheetMove" onclick="closeSheetIf(event,'sheetMove')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Mover a asignatura</h2>
+    <div class="field">
+      <label>Asignatura</label>
+      <select id="moveSelect"></select>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-sheet ghost" onclick="closeSheet('sheetMove')">Cancelar</button>
+      <button class="btn-sheet primary" onclick="confirmMove()">Mover</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+const EMOJIS = ['📐','📜','⚛️','🧬','💻','📖','🎨','🎵','🌍','🧮','📊','🏛️','🔬','📝','🌱','🏃','🎭','📷'];
+let folders = JSON.parse(localStorage.getItem('cr_folders') || 'null') || [
+  {id:'f1',name:'Matemáticas',emoji:'📐'},
+  {id:'f2',name:'Historia',emoji:'📜'},
+];
+let recordings = JSON.parse(localStorage.getItem('cr_recs') || '[]');
+// Restore blob URLs (can't persist across sessions - only metadata)
+recordings.forEach(r => { r.url = null; r.blob = null; });
+
+let selectedFolder = null; // folder for new recordings
+let filterFolder = 'all';
+let renameTarget = null;
+let moveTarget = null;
+let selectedEmoji = '📁';
+
+// Recording state
+let mediaRecorder = null, audioChunks = [], isRecording = false, isPaused = false;
+let timerInterval = null, recStart = 0, pausedMs = 0;
+let analyser = null, audioCtx = null, waveFrame = null;
+
+// ══════════════════════════════════════
+//  SAVE
+// ══════════════════════════════════════
+function save() {
+  localStorage.setItem('cr_folders', JSON.stringify(folders));
+  // Save metadata only (blobs can't be stored in localStorage)
+  const meta = recordings.map(r => ({...r, url:null, blob:null}));
+  localStorage.setItem('cr_recs', JSON.stringify(meta));
+}
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+let curScreen = 'record';
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + (screen === 'record' ? 'record' : screen === 'recs' ? 'recs' : 'folders')).classList.add('active');
+  document.getElementById('nav-' + screen).classList.add('active');
+  curScreen = screen;
+  if (screen === 'recs') renderRecs();
+  if (screen === 'folders') renderFolders();
+}
+
+// ══════════════════════════════════════
+//  WAVEFORM INIT
+// ══════════════════════════════════════
+(function initWave(){
+  const wf = document.getElementById('waveform');
+  for(let i=0;i<36;i++){
+    const b=document.createElement('div'); b.className='wbar'; wf.appendChild(b);
+  }
+})();
+
+// ══════════════════════════════════════
+//  RECORDING
+// ══════════════════════════════════════
+async function toggleRecord() {
+  if (isRecording) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    startRec(stream);
+  } catch(e) {
+    showToast('❌ Sin acceso al micrófono','err');
+  }
+}
+
+function startRec(stream) {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 128;
+  audioCtx.createMediaStreamSource(stream).connect(analyser);
+
+  audioChunks = [];
+  mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+  mediaRecorder.onstop = finishRec;
+  mediaRecorder.start();
+
+  isRecording = true; isPaused = false;
+  recStart = Date.now(); pausedMs = 0;
+
+  document.getElementById('btnRec').classList.add('recording');
+  document.getElementById('recIcon').setAttribute('rx','4');
+  document.getElementById('recIcon').setAttribute('x','11');
+  document.getElementById('recIcon').setAttribute('y','11');
+  document.getElementById('recIcon').setAttribute('width','10');
+  document.getElementById('recIcon').setAttribute('height','10');
+  document.getElementById('recIcon').removeAttribute('cx');
+  document.getElementById('recIcon').removeAttribute('cy');
+  document.getElementById('recIcon').removeAttribute('r');
+  // Change to square stop shape
+  const icon = document.getElementById('recIcon');
+  icon.outerHTML = '<rect id="recIcon" x="11" y="11" width="10" height="10" rx="2" fill="white"/>';
+
+  document.getElementById('recStatus').textContent = 'GRABANDO';
+  document.getElementById('recStatus').classList.add('on');
+  document.getElementById('recTimer').classList.add('recording');
+  document.getElementById('btnPause').disabled = false;
+  document.getElementById('btnStop').disabled = false;
+
+  startTimer(); animWave();
+}
+
+function togglePause() {
+  if (!isRecording) return;
+  if (!isPaused) {
+    mediaRecorder.pause();
+    isPaused = true;
+    clearInterval(timerInterval);
+    pausedMs += Date.now() - recStart;
+    cancelAnimationFrame(waveFrame);
+    flatWave();
+    document.getElementById('recStatus').textContent = 'PAUSADO';
+    document.getElementById('btnPause').textContent = '▶ Reanudar';
+    document.getElementById('btnRec').classList.remove('recording');
+  } else {
+    mediaRecorder.resume();
+    isPaused = false;
+    recStart = Date.now();
+    startTimer(); animWave();
+    document.getElementById('recStatus').textContent = 'GRABANDO';
+    document.getElementById('btnPause').textContent = '⏸ Pausar';
+    document.getElementById('btnRec').classList.add('recording');
+  }
+}
+
+function stopRecording() {
+  if (!isRecording) return;
+  mediaRecorder.stop();
+  mediaRecorder.stream.getTracks().forEach(t => t.stop());
+  isRecording = false;
+  clearInterval(timerInterval);
+  cancelAnimationFrame(waveFrame);
+  flatWave();
+  document.getElementById('recStatus').textContent = 'GUARDANDO...';
+  document.getElementById('recStatus').classList.remove('on');
+  document.getElementById('recTimer').classList.remove('recording');
+  document.getElementById('btnPause').disabled = true;
+  document.getElementById('btnStop').disabled = true;
+  document.getElementById('btnPause').textContent = '⏸ Pausar';
+  // Restore mic icon
+  const icon = document.getElementById('recIcon');
+  icon.outerHTML = '<circle id="recIcon" cx="16" cy="16" r="10" fill="white"/>';
+  document.getElementById('btnRec').classList.remove('recording');
+}
+
+function finishRec() {
+  const blob = new Blob(audioChunks, {type:'audio/webm'});
+  const url = URL.createObjectURL(blob);
+  const totalMs = pausedMs + (isPaused ? 0 : 0); // already stopped
+  const dur = Math.floor((pausedMs) / 1000);
+  const now = new Date();
+  const name = `Clase ${now.toLocaleDateString('es-ES')} ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
+
+  const rec = {
+    id:'r'+Date.now(), name, url, blob, dur,
+    date: now.toISOString(),
+    folderId: selectedFolder,
+    transcript: null, transcribing: false,
+  };
+  recordings.unshift(rec);
+  save();
+  document.getElementById('recStatus').textContent = 'LISTO PARA GRABAR';
+  document.getElementById('recTimer').textContent = '00:00';
+  showToast('✅ Grabación guardada','ok');
+  startTranscription(rec.id);
+}
+
+// ══════════════════════════════════════
+//  TIMER & WAVE
+// ══════════════════════════════════════
+function startTimer() {
+  recStart = Date.now();
+  timerInterval = setInterval(() => {
+    const ms = pausedMs + (Date.now() - recStart);
+    const s = Math.floor(ms/1000)%60, m = Math.floor(ms/60000);
+    document.getElementById('recTimer').textContent = p(m)+':'+p(s);
+  }, 500);
+}
+function p(n){return String(n).padStart(2,'0');}
+
+function animWave() {
+  if (!analyser) return;
+  const bars = document.querySelectorAll('.wbar');
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  function draw() {
+    analyser.getByteFrequencyData(data);
+    bars.forEach((b,i) => {
+      const v = data[Math.floor(i*data.length/bars.length)];
+      b.style.height = Math.max(4, (v/255)*36)+'px';
+      b.classList.toggle('on', v > 20);
+    });
+    waveFrame = requestAnimationFrame(draw);
+  }
+  draw();
+}
+function flatWave() {
+  document.querySelectorAll('.wbar').forEach(b=>{b.style.height='4px';b.classList.remove('on');});
+}
+
+// ══════════════════════════════════════
+//  TRANSCRIPTION
+// ══════════════════════════════════════
+async function startTranscription(id) {
+  const rec = recordings.find(r=>r.id===id);
+  if (!rec || !rec.blob) return;
+  rec.transcribing = true;
+
+  try {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) throw new Error('no api');
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SR();
+    recognition.lang = 'es-ES'; recognition.continuous = true; recognition.interimResults = false;
+    let text = '';
+    const audio = new Audio(rec.url);
+    const stream = audio.captureStream ? audio.captureStream() : null;
+    if (!stream) throw new Error('no stream');
+    recognition.start();
+    recognition.onresult = e => {
+      for(let i=e.resultIndex;i<e.results.length;i++)
+        if(e.results[i].isFinal) text += e.results[i][0].transcript+' ';
+    };
+    recognition.onend = () => {
+      rec.transcript = text.trim() || '(Sin texto detectado)';
+      rec.transcribing = false; save();
+    };
+    audio.onended = () => setTimeout(()=>recognition.stop(),800);
+    audio.play();
+    setTimeout(()=>recognition.stop(), 120000);
+  } catch(e) {
+    rec.transcript = '(Transcripción automática no disponible en este navegador. Puedes editar este campo.)';
+    rec.transcribing = false; save();
+  }
+}
+
+// ══════════════════════════════════════
+//  RENDER: RECORDINGS
+// ══════════════════════════════════════
+function renderRecs() {
+  const chips = document.getElementById('filterChips');
+  chips.innerHTML = `<div class="chip ${filterFolder==='all'?'active':''}" onclick="setFilter('all')">Todas</div>`;
+  folders.forEach(f => {
+    chips.innerHTML += `<div class="chip ${filterFolder===f.id?'active':''}" onclick="setFilter('${f.id}')">${f.emoji} ${f.name}</div>`;
+  });
+
+  const list = document.getElementById('recsList');
+  const shown = filterFolder==='all' ? recordings : recordings.filter(r=>r.folderId===filterFolder);
+
+  if (!shown.length) {
+    list.innerHTML = `<div class="empty-state"><div class="ei">🎙️</div><p>Sin grabaciones todavía.<br>Ve a <strong>Grabar</strong> para empezar.</p></div>`;
+    return;
+  }
+  list.innerHTML = '';
+  shown.forEach(rec => {
+    const f = folders.find(x=>x.id===rec.folderId);
+    const dur = fmtDur(rec.dur);
+    const date = new Date(rec.date).toLocaleDateString('es-ES',{day:'2-digit',month:'short'});
+    const card = document.createElement('div');
+    card.className = 'rec-card';
+    card.id = 'rc-'+rec.id;
+    card.innerHTML = `
+      <div class="rec-card-head" onclick="toggleCard('${rec.id}')">
+        <div class="rec-card-icon">🎙️</div>
+        <div class="rec-card-info">
+          <div class="rec-card-name">${esc(rec.name)}</div>
+          <div class="rec-card-meta">
+            <span>⏱ ${dur}</span>
+            <span>📅 ${date}</span>
+            ${f?`<span>${f.emoji} ${f.name}</span>`:''}
+          </div>
+        </div>
+        <div class="rec-card-arr">›</div>
+      </div>
+      <div class="rec-card-body">
+        ${rec.url ? `<audio controls src="${rec.url}"></audio>` : '<p style="color:var(--text3);font-size:12px;margin-bottom:12px">Audio disponible solo en esta sesión</p>'}
+        <div class="rec-actions">
+          <div class="action-pill" onclick="openRename('${rec.id}')">✏️ Renombrar</div>
+          <div class="action-pill" onclick="openMove('${rec.id}')">📁 Mover</div>
+          ${rec.url ? `<div class="action-pill" onclick="dlRec('${rec.id}')">⬇️ Guardar</div>` : ''}
+          <div class="action-pill danger" onclick="delRec('${rec.id}')">🗑️ Eliminar</div>
+        </div>
+        <div class="transcript-wrap">
+          <div class="transcript-lbl">
+            Transcripción
+            ${rec.transcribing ? '<span class="tbadge proc">● procesando</span>' : rec.transcript ? '<span class="tbadge ok">✓</span>' : ''}
+            ${rec.transcript&&!rec.transcribing ? `<span style="margin-left:auto;font-size:11px;color:var(--accent);cursor:pointer" onclick="editT('${rec.id}')">Editar</span>` : ''}
+          </div>
+          <div class="transcript-text" id="tt-${rec.id}">
+            ${rec.transcribing ? '<span style="color:var(--yellow)">Transcribiendo...</span>' :
+              rec.transcript ? esc(rec.transcript) :
+              '<span style="color:var(--text3)">Sin transcripción.</span>'}
+          </div>
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function setFilter(id) { filterFolder = id; renderRecs(); }
+
+function toggleCard(id) {
+  document.getElementById('rc-'+id)?.classList.toggle('open');
+}
+
+function editT(id) {
+  const rec = recordings.find(r=>r.id===id);
+  if(!rec) return;
+  const el = document.getElementById('tt-'+id);
+  el.innerHTML = `<textarea style="width:100%;min-height:80px;background:transparent;border:none;outline:none;color:var(--text);font-size:13px;line-height:1.8;font-family:'Plus Jakarta Sans',sans-serif;resize:none" id="ta-${id}">${esc(rec.transcript||'')}</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+      <div class="action-pill" onclick="cancelT('${id}')">Cancelar</div>
+      <div class="action-pill" style="border-color:var(--accent);color:var(--accent)" onclick="saveT('${id}')">Guardar</div>
+    </div>`;
+}
+function saveT(id) {
+  const rec = recordings.find(r=>r.id===id);
+  const ta = document.getElementById('ta-'+id);
+  if(rec&&ta) { rec.transcript=ta.value; save(); }
+  renderRecs();
+  document.getElementById('rc-'+id)?.classList.add('open');
+  showToast('✅ Transcripción guardada','ok');
+}
+function cancelT(id) {
+  renderRecs();
+  document.getElementById('rc-'+id)?.classList.add('open');
+}
+
+function delRec(id) {
+  if(!confirm('¿Eliminar esta grabación?')) return;
+  recordings = recordings.filter(r=>r.id!==id);
+  save(); renderRecs();
+  showToast('🗑️ Eliminada','ok');
+}
+
+function dlRec(id) {
+  const rec = recordings.find(r=>r.id===id);
+  if(!rec||!rec.url) { showToast('Audio no disponible en esta sesión','err'); return; }
+  const a=document.createElement('a'); a.href=rec.url;
+  a.download=rec.name.replace(/[^\w\s]/gi,'_')+'.webm'; a.click();
+  showToast('⬇️ Descargando...','ok');
+}
+
+// ══════════════════════════════════════
+//  RENDER: FOLDERS
+// ══════════════════════════════════════
+function renderFolders() {
+  const list = document.getElementById('foldersList');
+  list.innerHTML = '';
+  folders.forEach(f => {
+    const count = recordings.filter(r=>r.folderId===f.id).length;
+    list.innerHTML += `
+      <div class="folder-card">
+        <div class="folder-emoji">${f.emoji}</div>
+        <div class="folder-info">
+          <div class="folder-name">${esc(f.name)}</div>
+          <div class="folder-count">${count} grabación${count!==1?'es':''}</div>
+        </div>
+        <div class="folder-del" onclick="deleteFolder('${f.id}')">✕</div>
+      </div>`;
+  });
+  list.innerHTML += `<div class="add-folder-card" onclick="openNewFolder()">＋ Nueva asignatura</div>`;
+}
+
+function deleteFolder(id) {
+  const count = recordings.filter(r=>r.folderId===id).length;
+  if(count>0 && !confirm(`Esta asignatura tiene ${count} grabación(es). ¿Eliminarla?`)) return;
+  recordings.forEach(r=>{ if(r.folderId===id) r.folderId=null; });
+  folders = folders.filter(f=>f.id!==id);
+  if(selectedFolder===id) { selectedFolder=null; updateSelFolderLabel(); }
+  save(); renderFolders();
+  showToast('🗑️ Asignatura eliminada','ok');
+}
+
+// ══════════════════════════════════════
+//  FOLDER PICKER (for recording screen)
+// ══════════════════════════════════════
+function openFolderPickSheet() {
+  const list = document.getElementById('pickFolderList');
+  list.innerHTML = '';
+  const none = document.createElement('div');
+  none.className = 'folder-card'; none.style.marginBottom='8px';
+  none.innerHTML = `<div class="folder-emoji">—</div><div class="folder-info"><div class="folder-name">Sin asignatura</div></div>`;
+  none.onclick = () => { selectedFolder=null; updateSelFolderLabel(); closeSheet('sheetFolderPick'); };
+  list.appendChild(none);
+  folders.forEach(f => {
+    const d = document.createElement('div');
+    d.className = 'folder-card'; d.style.marginBottom='8px';
+    d.innerHTML = `<div class="folder-emoji">${f.emoji}</div><div class="folder-info"><div class="folder-name">${esc(f.name)}</div></div>`;
+    d.onclick = () => { selectedFolder=f.id; updateSelFolderLabel(); closeSheet('sheetFolderPick'); showToast(`${f.emoji} ${f.name}`,'ok'); };
+    list.appendChild(d);
+  });
+  openSheet('sheetFolderPick');
+}
+
+function updateSelFolderLabel() {
+  const f = folders.find(x=>x.id===selectedFolder);
+  document.getElementById('selFolderLabel').textContent = f ? `${f.emoji} ${f.name}` : 'Sin asignatura';
+}
+
+// ══════════════════════════════════════
+//  NEW FOLDER
+// ══════════════════════════════════════
+function openNewFolder() {
+  document.getElementById('nfName').value='';
+  selectedEmoji='📁';
+  const grid=document.getElementById('emojiGrid');
+  grid.innerHTML='';
+  EMOJIS.forEach(e=>{
+    const d=document.createElement('div');
+    d.className='emoji-opt'+(e==='📁'?' sel':'');
+    d.textContent=e;
+    d.onclick=()=>{
+      document.querySelectorAll('.emoji-opt').forEach(x=>x.classList.remove('sel'));
+      d.classList.add('sel'); selectedEmoji=e;
+    };
+    grid.appendChild(d);
+  });
+  openSheet('sheetNewFolder');
+  setTimeout(()=>document.getElementById('nfName').focus(),300);
+}
+
+function createFolder() {
+  const name=document.getElementById('nfName').value.trim();
+  if(!name){showToast('Escribe un nombre','err');return;}
+  folders.push({id:'f'+Date.now(),name,emoji:selectedEmoji});
+  save(); closeSheet('sheetNewFolder'); renderFolders();
+  showToast('✅ Asignatura creada','ok');
+}
+
+// ══════════════════════════════════════
+//  RENAME
+// ══════════════════════════════════════
+function openRename(id) {
+  renameTarget=id;
+  const rec=recordings.find(r=>r.id===id);
+  document.getElementById('renameInput').value=rec?rec.name:'';
+  openSheet('sheetRename');
+  setTimeout(()=>{const i=document.getElementById('renameInput');i.focus();i.select();},300);
+}
+function confirmRename() {
+  const val=document.getElementById('renameInput').value.trim();
+  if(!val){showToast('Escribe un nombre','err');return;}
+  const rec=recordings.find(r=>r.id===renameTarget);
+  if(rec) rec.name=val;
+  save(); closeSheet('sheetRename'); renderRecs();
+  document.getElementById('rc-'+renameTarget)?.classList.add('open');
+  showToast('✅ Renombrado','ok'); renameTarget=null;
+}
+
+// ══════════════════════════════════════
+//  MOVE
+// ══════════════════════════════════════
+function openMove(id) {
+  moveTarget=id;
+  const sel=document.getElementById('moveSelect');
+  sel.innerHTML='<option value="">— Sin asignatura —</option>';
+  folders.forEach(f=>{ sel.innerHTML+=`<option value="${f.id}">${f.emoji} ${f.name}</option>`; });
+  const rec=recordings.find(r=>r.id===id);
+  if(rec) sel.value=rec.folderId||'';
+  openSheet('sheetMove');
+}
+function confirmMove() {
+  const val=document.getElementById('moveSelect').value;
+  const rec=recordings.find(r=>r.id===moveTarget);
+  if(rec) rec.folderId=val||null;
+  save(); closeSheet('sheetMove'); renderRecs();
+  document.getElementById('rc-'+moveTarget)?.classList.add('open');
+  showToast('📁 Movida','ok'); moveTarget=null;
+}
+
+// ══════════════════════════════════════
+//  SHEETS
+// ══════════════════════════════════════
+function openSheet(id){document.getElementById(id).classList.add('open');}
+function closeSheet(id){document.getElementById(id).classList.remove('open');}
+function closeSheetIf(e,id){if(e.target===document.getElementById(id))closeSheet(id);}
+
+// ══════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════
+function fmtDur(s) {
+  if(!s&&s!==0) return '0:00';
+  return Math.floor(s/60)+':'+p(s%60);
+}
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+let toastTm;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+(type||'');
+  clearTimeout(toastTm); toastTm=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ══════════════════════════════════════
+//  SERVICE WORKER (inline, para PWA)
+// ══════════════════════════════════════
+if('serviceWorker' in navigator){
+  const swCode=`
+self.addEventListener('install',e=>self.skipWaiting());
+self.addEventListener('activate',e=>clients.claim());
+self.addEventListener('fetch',e=>{
+  if(e.request.mode==='navigate'){
+    e.respondWith(fetch(e.request).catch(()=>caches.match('/')));
+  }
+});`;
+  const blob=new Blob([swCode],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+</script>
+</body>
+</html>
